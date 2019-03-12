@@ -2,10 +2,12 @@ const Blockchain = require('./blockchain')
 const Block = require('./block')
 
 describe('Blockchain', () => {
-  let blockchain = new Blockchain()
+  let blockchain, newChain, originalChain
 
   beforeEach(() => {
     blockchain = new Blockchain()
+    newChain = new Blockchain()
+    originalChain = blockchain.chain
   })
 
   it('contain a `chain` Array instance', () => {
@@ -58,6 +60,59 @@ describe('Blockchain', () => {
       describe('and chain does not contain any invalid block', () => {
         it('return true', () => {
           expect(Blockchain.isValidChain(blockchain.chain)).toBe(true)
+        })
+      })
+    })
+  })
+
+  describe('replaceChain()', () => {
+    let errorMock, logMock
+
+    beforeEach(() => {
+      errorMock = jest.fn()
+      logMock = jest.fn()
+
+      global.console.error = errorMock
+      global.console.log = logMock
+    })
+
+    describe('when new chain is not longer', () => {
+      beforeEach(() => {
+        newChain.chain[0] = { new: 'chain' }
+        blockchain.replaceChain(newChain.chain)
+      })
+
+      it('does not replace the chain', () => {
+        expect(blockchain.chain).toEqual(originalChain)
+      })
+
+      it('logs an error', () => {
+        expect(errorMock).toHaveBeenCalled()
+      })
+    })
+
+    describe('when the new chain is longer', () => {
+      beforeEach(() => {
+        newChain.addBlock({ data: 'Bears' })
+        newChain.addBlock({ data: 'Beets' })
+        newChain.addBlock({ data: 'Star Wars' })
+      })
+
+      describe('and the chain is invalid', () => {
+        it('does not replace the chain', () => {
+          newChain.chain[1].hash = 'fake'
+
+          blockchain.replaceChain(newChain.chain)
+
+          expect(blockchain.chain).toEqual(originalChain)
+        })
+      })
+
+      describe('and the chain is valid', () => {
+        it('replaces the chain', () => {
+          blockchain.replaceChain(newChain.chain)
+
+          expect(blockchain.chain).toEqual(newChain.chain)
         })
       })
     })
