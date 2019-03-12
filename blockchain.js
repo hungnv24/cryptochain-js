@@ -38,13 +38,13 @@ class Blockchain {
     for (let i = 1; i < chain.length; i++) {
       const curBlock = chain[i]
       const actualLashHash = chain[i - 1].hash
-      const { timestamp, lastHash, hash, data } = curBlock
+      const { timestamp, lastHash, hash, data, nonce, difficulty } = curBlock
 
       if (lastHash !== actualLashHash) {
         return false
       }
 
-      const validatedHash = cryptoHash(timestamp, lastHash, data)
+      const validatedHash = cryptoHash(timestamp, lastHash, data, nonce, difficulty)
 
       if (hash !== validatedHash) {
         return false
