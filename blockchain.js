@@ -39,6 +39,7 @@ class Blockchain {
       const curBlock = chain[i]
       const actualLashHash = chain[i - 1].hash
       const { timestamp, lastHash, hash, data, nonce, difficulty } = curBlock
+      const lastDifficulty = chain[i - 1].difficulty
 
       if (lastHash !== actualLashHash) {
         return false
@@ -47,6 +48,10 @@ class Blockchain {
       const validatedHash = cryptoHash(timestamp, lastHash, data, nonce, difficulty)
 
       if (hash !== validatedHash) {
+        return false
+      }
+
+      if (Math.abs(lastDifficulty - difficulty > 1)) {
         return false
       }
     }
