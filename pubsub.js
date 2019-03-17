@@ -1,15 +1,18 @@
 const redis = require('redis')
 
 const CHANNELS = {
-  TEST: 'TEST'
+  TEST: 'TEST',
+  BLOCKCHAIN: 'BLOCKCHAIN',
 }
 
 class PubSub {
-  constructor() {
+  constructor({ blockchain }) {
+    this.blockchain = blockchain
+
     this.publisher = this.getConnection()
     this.subcriber = this.getConnection()
 
-    this.subcriber.subscribe(CHANNELS.TEST)
+    this.subscribeToChannels()
 
     this.subcriber.on(
       'message', 
@@ -17,8 +20,14 @@ class PubSub {
     )
   }
 
+  subscribeToChannels() {
+    Object.values(CHANNELS).forEach(channel => {
+      this.subcriber.subscribe(channel)
+    })
+  }
+
   getConnection() {
-    const client = redis.createClient()
+    const client = redis.createClient(6379, '127.0.0.1')
 
     client.on('connect', () => {
       console.log("Redis connected")
@@ -33,8 +42,24 @@ class PubSub {
 
   handleMessage(channel, message) {
     console.log(`Message received. Channel: ${channel}. Message: ${message}`)
+
+    const parsedMessage = JSON.parse(message)
+
+    if (channel === CHANNELS.BLOCKCHAIN) {
+      this.blockchain.replaceChain(parsedMessage)
+    }
+  }
+
+  publish({ channel , message }) {
+    this.publisher.publish(channel, message)
+  }
+
+  broadcastChain() {
+    this.publish({
+      channel: CHANNELS.BLOCKCHAIN,
+      message: JSON.stringify(this.blockchain.chain)
+    })
   }
 }
 
-const testPubSub = new PubSub()
-setTimeout(() => testPubSub.publisher.publish(CHANNELS.TEST, "foo"), 1000)
+module.exports = PubSub
