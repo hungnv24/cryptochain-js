@@ -67,4 +67,36 @@ describe('Transaction', () => {
     })
   })
 
+  describe('validTransaction()', () => {
+    let errorMock
+
+    beforeEach(() => {
+      errorMock = jest.fn()
+      global.console.error = errorMock
+    })
+
+    describe('when the transaction is valid', () => {
+      it('return true', () => {
+        expect(Transaction.validTransaction(transaction)).toBe(true)
+      })
+    })
+
+    describe('when transaction is invalid', () => {
+      describe('and a transaction outputMap value is invalid', () => {
+        it('return false and logs error', () => {
+          transaction.outputMap[senderWallet.publicKey] = 9999999
+          expect(Transaction.validTransaction(transaction)).toBe(false)
+          expect(errorMock).toHaveBeenCalled()
+        })
+      })
+
+      describe('and the transaction input siganture is invalid', () => {
+        it('return false and logs error', () => {
+          transaction.input.signature = new Wallet().sign('data')
+          expect(Transaction.validTransaction(transaction)).toBe(false)
+          expect(errorMock).toHaveBeenCalled()
+        })
+      })
+    })
+  })
 })
