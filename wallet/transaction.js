@@ -34,8 +34,6 @@ class Transaction {
 
     if (amount !== outputTotal) {
       console.error(`Invalid transaction amount from ${address}`)
-      console.error(amount)
-      console.error(outputTotal)
       return false
     }
 
