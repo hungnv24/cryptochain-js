@@ -90,7 +90,7 @@ describe('Transaction', () => {
         })
       })
 
-      describe('and the transaction input siganture is invalid', () => {
+      describe('and the transaction input signature is invalid', () => {
         it('return false and logs error', () => {
           transaction.input.signature = new Wallet().sign('data')
           expect(Transaction.validTransaction(transaction)).toBe(false)
@@ -98,10 +98,20 @@ describe('Transaction', () => {
         })
       })
     })
+  })
 
-    describe('update()', () => {
-      let originalSignature, originalSenderOutput, nextRecipient, nextAmount
+  describe('update()', () => {
+    let originalSignature, originalSenderOutput, nextRecipient, nextAmount
 
+    describe('the amount is invalid', () => {
+      it('throws an error', () => {
+        expect(() => {
+          transaction.update({ senderWallet, recipient: 'foo', amount: 999999999 })
+        }).toThrow('Amount exceeds balance')
+      })
+    })
+
+    describe('the amount is valid', () => {
       beforeEach(() => {
         originalSignature = transaction.input.signature
         originalSenderOutput = transaction.outputMap[senderWallet.publicKey]
@@ -128,6 +138,27 @@ describe('Transaction', () => {
 
       it('re-signs the transaction', () => {
         expect(transaction.input.signature).not.toEqual(originalSignature)
+      })
+
+      describe('add another update to the same recipient', () => {
+        let addedAmount
+
+        beforeEach(() => {
+          addedAmount = 50
+          transaction.update({
+            senderWallet, recipient: nextRecipient, amount: addedAmount
+          })
+        })
+
+        it('adds to the recipient amount', () => {
+          expect(transaction.outputMap[nextRecipient])
+            .toEqual(nextAmount + addedAmount)
+        })
+
+        it('subtracts the amount from the original sender output amount', () => {
+          expect(transaction.outputMap[senderWallet.publicKey])
+            .toEqual(originalSenderOutput - nextAmount - addedAmount)
+        })
       })
     })
   })
