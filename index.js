@@ -72,6 +72,21 @@ const syncChains = () => {
   })
 }
 
+const syncTransactionMap = () => {
+  request({ url: `${ROOT_NODE_ADDRESS}/api/transaction-pool-map`}, (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+      const parsedData = JSON.parse(body)
+
+      console.log('sync and replace transaction map with ', parsedData)
+
+      Object.values(parsedData)
+        .forEach((t) => { transactionPool.setTransaction(t) })
+    } else {
+      console.error(error)
+    }
+  })
+}
+
 let PEER_PORT
 
 if (process.env.GENERATE_PEER_PORT === 'true') {
@@ -85,5 +100,6 @@ app.listen(PORT, () => {
 
   if (PORT !== DEFAULT_PORT) {
     syncChains()
+    syncTransactionMap()
   }
 })
